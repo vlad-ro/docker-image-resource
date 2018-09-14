@@ -112,12 +112,31 @@ log_in() {
   local username="$1"
   local password="$2"
   local registry="$3"
+#  local aws_assume_role_arn="$4"
+  local aws_access_key_id="$4"
+  local aws_secret_access_key="$5"
+  local aws_assume_role_arn="$6"
 
   if [ -n "${username}" ] && [ -n "${password}" ]; then
     echo "${password}" | docker login -u "${username}" --password-stdin ${registry}
   else
     mkdir -p ~/.docker
     echo '{"credsStore":"ecr-login"}' >> ~/.docker/config.json
+
+    if [ -n "${aws_assume_role_arn}" ]; then
+      mkdir -p ~/.aws
+      cat >> ~/.aws/credentials <<END
+[default]
+aws_access_key_id = $aws_access_key_id
+aws_secret_access_key = $aws_secret_access_key
+END
+      cat >> ~/.aws/config <<END
+[profile concourse]
+role_arn = $aws_assume_role_arn
+source_profile = default
+#credential_source = Ec2InstanceMetadata
+END
+    fi
   fi
 }
 

@@ -35,9 +35,15 @@ client_certs=$(jq -r '.source.client_certs // []' < $payload)
 max_concurrent_downloads=$(jq -r '.source.max_concurrent_downloads // 3' < $payload)
 max_concurrent_uploads=$(jq -r '.source.max_concurrent_uploads // 3' < $payload)
 
-export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // ""' < $payload)
-export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // ""' < $payload)
-export AWS_SESSION_TOKEN=$(jq -r '.source.aws_session_token // ""' < $payload)
+#export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // ""' < $payload)
+#export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // ""' < $payload)
+#export AWS_SESSION_TOKEN=$(jq -r '.source.aws_session_token // ""' < $payload)
+export AWS_SDK_LOAD_CONFIG=true
+export AWS_PROFILE="concourse"
+
+aws_access_key_id=$(jq -r '.source.aws_access_key_id // ""' < $payload)
+aws_secret_access_key=$(jq -r '.source.aws_secret_access_key // ""' < $payload)
+aws_assume_role_arn=$(jq -r '.source.aws_assume_role_arn // ""' < $payload)
 
 if private_registry "${repository}" ; then
   registry="$(extract_registry "${repository}")"
@@ -52,7 +58,8 @@ start_docker \
 	"${max_concurrent_uploads}" \
 	"$insecure_registries" \
 	"$registry_mirror"
-log_in "$username" "$password" "$registry"
+#log_in "$username" "$password" "$registry" "$aws_assume_role_arn"
+log_in "$username" "$password" "$registry" "$aws_access_key_id" "$aws_secret_access_key" "$aws_assume_role_arn"
 
 tag_source=$(jq -r '.source.tag // "latest"' < $payload)
 tag_params=$(jq -r '.params.tag_file // ""' < $payload)
